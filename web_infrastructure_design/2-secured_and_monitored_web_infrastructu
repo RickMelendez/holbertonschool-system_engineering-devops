@@ -1,0 +1,102 @@
+# Infrastructure Explanation and Issues
+
+## Infrastructure Explanation
+
+### 1. Firewalls
+- **Why Added**: 
+  - To enhance security by restricting unauthorized access to the infrastructure.
+- **Purpose**:
+  - **Firewall 1**: Protects the load balancer from malicious traffic.
+  - **Firewall 2 & Firewall 3**: Protect individual servers (Server 1 and Server 2), blocking unauthorized communication and minimizing the attack surface.
+
+---
+
+### 2. Traffic Served Over HTTPS
+- **Why Added**:
+  - To ensure secure communication between the user’s browser and the website.
+- **Purpose**:
+  - Encrypts sensitive data (e.g., login credentials, payment information) to prevent interception by attackers.
+  - Builds user trust by showing the website is secure (via the HTTPS padlock icon in browsers).
+
+---
+
+### 3. Monitoring
+- **Why Added**:
+  - To proactively detect issues and monitor the health, performance, and activity of the infrastructure.
+- **Purpose**:
+  - Identifies potential problems (e.g., high CPU usage, memory leaks) before they lead to downtime.
+  - Helps in capacity planning and understanding traffic patterns.
+- **How the Monitoring Tool Collects Data**:
+  - **Monitoring Clients**: Installed on each server and database, these clients gather metrics such as CPU usage, memory, disk space, QPS (Queries Per Second), and logs.
+  - The data is sent to a centralized service like Sumo Logic, Prometheus, or ELK Stack for analysis and visualization.
+
+---
+
+### 4. Monitoring Web Server QPS (Queries Per Second)
+- **Steps**:
+  1. Install a monitoring tool (e.g., Prometheus with an Nginx exporter or a built-in HAProxy logging module).
+  2. Configure the tool to collect metrics specifically related to HTTP requests served by the web server.
+  3. Visualize the data in real-time using a dashboard like Grafana to track QPS trends and detect anomalies.
+  
+```mermaid
+
+graph TD
+    A[User Browser] -->|HTTPS Request| LB(Load Balancer - HAProxy)
+    subgraph Firewall Layer
+        LB --> FW1[Firewall 1 - Protect Load Balancer]
+    end
+    FW1 --> S1(Web Server - Nginx - Server 1)
+    FW1 --> S2(Web Server - Nginx - Server 2)
+    
+    subgraph Server 1
+        S1 --> FW2[Firewall 2 - Protect Server 1]
+        FW2 --> AS1[Application Server - Server 1]
+        AS1 --> AF1[Application Files - Code Base]
+        AS1 --> DB[Database - MySQL]
+        AS1 --> M1[Monitoring Client - Server 1]
+    end
+    
+    subgraph Server 2
+        S2 --> FW3[Firewall 3 - Protect Server 2]
+        FW3 --> AS2[Application Server - Server 2]
+        AS2 --> AF2[Application Files - Code Base]
+        AS2 --> DB
+        AS2 --> M2[Monitoring Client - Server 2]
+    end
+    
+    subgraph Central Database
+        DB --> M3[Monitoring Client - Database]
+    end
+    
+    F[DNS Server] -->|DNS Query| LB
+
+```
+---
+
+## Issues with This Infrastructure
+
+### 1. SSL Termination at the Load Balancer
+- **Why It’s an Issue**:
+  - Terminating SSL at the load balancer means traffic between the load balancer and the web servers is unencrypted.
+  - If the internal network is compromised, sensitive data (e.g., session cookies) could be intercepted.
+- **Potential Solutions**:
+  - Use end-to-end encryption by enabling HTTPS communication between the load balancer and the web/application servers.
+
+---
+
+### 2. Single MySQL Server for Writes
+- **Why It’s an Issue**:
+  - A single MySQL server for writes creates a **single point of failure** (SPOF). If it fails, the entire infrastructure cannot process writes.
+  - Limited scalability: Write operations can become a bottleneck as traffic increases.
+- **Potential Solutions**:
+  - Implement MySQL replication with a master-slave setup or use clustering (e.g., MySQL Group Replication) for high availability.
+  - Deploy a load balancer for the database layer to distribute write and read operations effectively.
+
+---
+
+### 3. All Servers Hosting the Same Components
+- **Why It’s a Problem**:
+  - This setup lacks clear separation of concerns. Each server runs a database, web server, and application server, leading to:
+    - **Resource Contention**: Components competing for the same CPU, memory, and disk space.
+    - **Complex Maintenance**: Any server outage affects multiple parts of the stack.
+    - **Scalability Issues**: Adding more servers doesn't effectively distribute individual

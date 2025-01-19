@@ -1,0 +1,100 @@
+1. **Load Balancer (HAProxy)**  
+Why Added: To distribute incoming traffic across multiple servers.  
+
+2. **Additional Web Server (Server 2 with Nginx)**  
+Why Added: To provide redundancy and share the workload of processing incoming requests.  
+
+3. **Additional Application Server**  
+Why Added: To handle application logic and backend processing for the second web server.  
+
+4. **Centralized Database (MySQL)**  
+Why Kept: Central storage of data ensures consistency across the application.
+
+```mermaid
+
+graph TD
+    A[User Browser] -->|HTTP/HTTPS Request| LB(Load Balancer - HAProxy)
+    LB --> S1(Web Server - Nginx - Server 1)
+    LB --> S2(Web Server - Nginx - Server 2)
+    
+    S1 --> AS1[Application Server - Server 1]
+    S2 --> AS2[Application Server - Server 2]
+    
+    AS1 --> AF1[Application Files - Code Base]
+    AS2 --> AF2[Application Files - Code Base]
+    
+    AS1 --> DB[Database - MySQL]
+    AS2 --> DB[Database - MySQL]
+    
+    F[DNS Server] -->|DNS Query| LB
+    
+    subgraph Server 1
+        S1
+        AS1
+        AF1
+    end
+    
+    subgraph Server 2
+        S2
+        AS2
+        AF2
+    end
+    
+    subgraph Central Database
+        DB
+    end
+```
+
+1. **Single Points of Failure (SPOF)**  
+Despite adding redundancy at certain levels, some components remain critical single points of failure:  
+
+	1. Database (MySQL):
+		+ Why it's a SPOF:
+			+ The database is centralized. If it crashes or becomes unavailable (e.g., due to hardware failure or a software bug), the entire system is impacted.
+		+ Solution: Implement database replication (e.g., master-slave or master-master replication) or clustering to ensure high availability.
+	
+	2. Load Balancer (HAProxy):  
+		+ Why it's a SPOF:
+			+ If the load balancer fails, users cannot access the servers behind it, even if they are functional.
+		+ Solution: Introduce a redundant load balancer setup using technologies like Keepalived for failover.
+		
+	3. No Redundant Web/Application Servers:  
+		+ Why it's a SPOF:
+			+ While the setup includes two servers, if both fail (e.g., due to a shared network outage or misconfiguration), the system is offline.
+		+ Solution: Expand to a geographically distributed infrastructure or add more servers across different zones.
+		
+2. **Security Issues**  
+The infrastructure lacks critical security measures, leaving it vulnerable to attacks:
+
+	1. No Firewall:
+		+ Why it's an issue:
+			+ All ports are potentially open to the internet, exposing the system to unauthorized access or attacks.
+		+ Solution: Use a firewall (e.g., iptables, UFW) to restrict access to essential ports (e.g., 80 for HTTP, 443 for HTTPS, and 3306 for MySQL with restrictions).
+
+	2. No HTTPS:
+		+ Why it's an issue:
+			+ Traffic between the user and the server is not encrypted, exposing sensitive data (e.g., login credentials) to interception.
+		+ Solution: Implement HTTPS using SSL/TLS certificates (e.g., via Let's Encrypt) to encrypt all communication.
+		
+	3. No Protection Against DDoS Attacks:
+		+ Why it's an issue:
+			+ Without rate-limiting or DDoS mitigation, the load balancer or servers can be overwhelmed by malicious traffic.
+		+ Solution: Use tools like Cloudflare or AWS Shield to filter and mitigate DDoS attacks.
+			
+3. **Lack of Monitoring**  
+The infrastructure has no monitoring or alerting system to detect and respond to issues proactively.
+
+	1. No System Monitoring:
+		+ Why it's an issue:
+			+ There's no way to track server health (CPU usage, memory, disk space) or identify potential failures early.
+		+ Solution: Use monitoring tools like Prometheus with Grafana or Nagios to track resource utilization and generate alerts.
+
+	2. No Log Aggregation:
+		+ Why it's an issue:
+			+ Troubleshooting requires accessing individual server logs, which is cumbersome and inefficient.
+		+ Solution: Implement centralized logging with tools like ELK Stack (Elasticsearch, Logstash, Kibana) or Graylog.
+
+	3. No Uptime Monitoring:
+		+ Why it's an issue:
+			+ Downtime could go unnoticed until users report it, leading to prolonged outages.
+		+ Solution: Use uptime monitoring services like Pingdom or UptimeRobot to track availability and alert administrators of outages.
