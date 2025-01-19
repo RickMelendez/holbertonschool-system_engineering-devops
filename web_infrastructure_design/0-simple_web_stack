@@ -1,0 +1,80 @@
+Step-by-step Process:
+User Wants to Access Website:
+A user opens a web browser and types www.foobar.com in the address bar to visit the website.
+
+Role of the Domain Name (www.foobar.com):
+Domain Name: www.foobar.com is a human-readable address that points to an IP address where the server hosting the website is located. The domain name is translated into an IP address by the Domain Name System (DNS). In this case, www.foobar.com points to the IP address 8.8.8.8 (the server hosting the infrastructure).
+
+DNS Resolution:
+The browser queries a DNS server to resolve the domain name www.foobar.com into the IP address 8.8.8.8.
+The DNS record for www.foobar.com is either a CNAME record or an A record, with the A record mapping www.foobar.com to the server’s IP address 8.8.8.8.
+
+User Sends HTTP Request to Web Server:
+Once the domain resolves to an IP address, the browser sends an HTTP request to the server at 8.8.8.8. The web server (Nginx) listens on port 80 (HTTP) or 443 (HTTPS) for incoming traffic.
+
+Role of the Web Server (Nginx):
+Web Server: The web server (Nginx) is responsible for receiving HTTP requests from users, serving static files (like HTML, CSS, JavaScript, and images), or forwarding requests to an application server (e.g., a Python or Node.js server) if dynamic content is needed.
+In this case, Nginx processes requests for static content (e.g., homepage, images) and may forward requests requiring dynamic processing to the application server.
+
+Role of the Application Server:
+Application Server: The application server processes dynamic content. For example, if the user requests a page that requires database data (e.g., a blog post), the application server (e.g., a Node.js or Python Flask/Django server) handles the logic for fetching data from the database and sending it back to the user through the web server.
+
+Role of the Database (MySQL):
+Database: The database stores and manages the content of the website, such as user data, blog posts, product details, etc. The application server queries the MySQL database to retrieve or store information as needed (e.g., fetching the latest blog post for the user’s request).
+
+Communication Between the User and Server:
+The communication happens over the HTTP/HTTPS protocol using the Transmission Control Protocol (TCP) for reliable communication between the client (user's browser) and the server.
+The HTTP request is sent to Nginx, which then forwards it to the application server if needed. The application server fetches data from the MySQL database, processes it, and sends a response back to Nginx, which serves it to the user's browser.
+
+Details and Specifics:
+What is a server?
+A server is a machine (physical or virtual) that hosts applications, websites, or data. It is responsible for processing incoming requests, running application code, storing data, and responding to clients (users).
+In this case, the server at IP 8.8.8.8 is hosting the entire website infrastructure and is likely located in a data center to ensure high availability and reliable access.
+
+Physical vs. Virtual: The server could be a physical server (a dedicated machine) or a virtual server (a software-based instance running on physical hardware). In modern cloud environments, servers are typically virtual, but they still run on physical hardware.
+
+Operating System: The server runs an operating system (OS), typically Linux (e.g., Ubuntu or CentOS), to manage resources and run the required software (such as Nginx for web serving and MySQL for database management).
+
+What is the role of the domain name?
+The domain name (e.g., www.foobar.com) is used to map a human-readable address to an IP address (e.g., 8.8.8.8). It allows users to easily access the website without needing to remember a numerical IP address.
+
+What type of DNS record is "www" in www.foobar.com?
+The DNS record for www.foobar.com is an A record, which resolves the domain name to the IP address 8.8.8.8. Alternatively, a CNAME record could alias www.foobar.com to another domain, but here it uses an A record.
+
+What is the role of the web server?
+The web server (Nginx) handles HTTP requests from users, serves static files, and forwards dynamic requests to the application server. It acts as the front-facing server that interacts with clients and manages traffic.
+
+What is the role of the application server?
+The application server processes dynamic content by running the website’s application code (e.g., PHP, Python, Node.js). It handles requests that require interaction with the database or complex logic, such as rendering a blog post or processing user login.
+
+What is the role of the database?
+The database (MySQL) stores data for the application. It is queried by the application server to retrieve, add, or update data in response to user actions (e.g., showing a list of blog posts or saving a user’s profile information).
+
+What is the server using to communicate with the computer of the user requesting the website?
+The server communicates with the user’s computer over the HTTP/HTTPS protocol, which runs over TCP/IP to ensure reliable, ordered, and error-checked delivery of data.
+
+Issues with this Infrastructure:
+Single Point of Failure (SPOF):
+Since everything is hosted on one server, if the server goes down due to hardware failure, software bugs, or any issue, the entire website becomes unavailable. There is no redundancy or failover in place to keep the site live in case of server failure.
+
+Downtime During Maintenance:
+If the web server or application server needs to be updated (e.g., for new code deployment or updates), the server needs to be restarted, leading to temporary downtime. There’s no easy way to update the server without interrupting user access.
+
+Scalability Issues:
+If the website experiences a surge in traffic (e.g., during a marketing campaign or viral post), the single server might not be able to handle the load. It could become slow, unresponsive, or crash. The infrastructure can’t scale horizontally (adding more servers) to handle increased demand.
+
+Resource Bottlenecks:
+Hosting everything on a single server creates potential resource bottlenecks. For example, if the application consumes too much memory or CPU power, it might affect the performance of the web server or database, leading to slow page load times and degraded user experience.
+
+Possible Solutions to Improve the Infrastructure:
+Add Redundancy:
+Implement load balancing and distribute traffic across multiple servers to avoid a single point of failure. Having multiple servers can increase availability and fault tolerance.
+
+Zero-Downtime Deployments:
+Implement rolling updates or use blue-green deployment strategies to update the web and application servers without causing downtime.
+
+Scalable Infrastructure:
+Implement horizontal scaling by using multiple web servers and application servers, and possibly use a managed database solution that can scale with demand. You could also consider a cloud provider with auto-scaling features to automatically add resources when needed.
+
+Use of Caching:
+Caching frequently accessed data (e.g., via Redis or Memcached) can help alleviate load on the database and improve performance under high traffic.
